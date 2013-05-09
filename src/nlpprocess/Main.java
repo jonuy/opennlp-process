@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import nlpwrapper.OpenNlpWrapper;
+import opennlp.tools.postag.POSSample;
 import util.FileHandler;
 
 public class Main {
@@ -31,11 +32,11 @@ public class Main {
 		System.out.println("Command: "+command+" csvFile: "+csvFile+" inputColumn: "+inputColumn+" outFile: "+outFile);
 		
 		// Find common names
-		if (command.equals("get-names")) {
+		if (command.equals("find-names")) {
 			findNames(csvFile, inputColumn, outFile);
 		}
 		// Find common nouns and verbs
-		else if (command.equals("common-nv")) {
+		else if (command.equals("find-nv")) {
 			findNounsVerbs(csvFile, inputColumn, outFile);
 		}
 		
@@ -90,6 +91,82 @@ public class Main {
 	}
 	
 	private static void findNounsVerbs(String filename, int columnIndex, String outFilename) {
+		FileHandler fh = new FileHandler();
+		OpenNlpWrapper nlp = new OpenNlpWrapper();
 		
+		String[] messages = fh.getMessagesFromFile(filename, columnIndex);
+		HashMap<String,Integer> nouns = new HashMap<String,Integer>();
+		HashMap<String,Integer> verbs = new HashMap<String,Integer>();
+		for (int i = 0; i < messages.length; i++) {
+			try {
+				POSSample taggedMsg = nlp.tagPOS(messages[i], "models/en-pos-maxent.bin");
+				for (int j = 0; j < taggedMsg.getTags().length; j++) {
+					String tag = taggedMsg.getTags()[j];
+					String key = taggedMsg.getSentence()[j];
+					key = key.replace(".", "");
+					if (tag.startsWith("N")) {
+						if (nouns.containsKey(key)) {
+							Integer count = nouns.get(key);
+							int newCount = count.intValue() + 1;
+							nouns.put(key, newCount);
+						}
+						else {
+							nouns.put(key, 1);
+						}
+					}
+					else if (tag.startsWith("V")) {
+						if (verbs.containsKey(key)) {
+							Integer count = verbs.get(key);
+							int newCount = count.intValue() + 1;
+							verbs.put(key, newCount);
+						}
+						else {
+							verbs.put(key, 1);
+						}
+					}
+				}
+			}
+			catch (Exception e) {
+				System.out.println("Error POS tagging message # " + i + ". " + e.getMessage());
+			}
+		}
+		
+		if (nouns.size() > 0) {
+			ArrayList<String[]> results = new ArrayList<String[]>();
+			String[] labelRow = new String[2];
+			labelRow[0] = "noun";
+			labelRow[1] = "count";
+			results.add(labelRow);
+			for (String key : nouns.keySet()) {
+				Integer count = nouns.get(key);
+				System.out.println("NOUN:"+key+" count:"+count.intValue());
+				
+				String[] row = new String[2];
+				row[0] = key;
+				row[1] = count.toString();
+				results.add(row);
+			}
+			
+			fh.writeResultsToCSV(outFilename+"-nouns", results);
+		}
+		
+		if (verbs.size() > 0) {
+			ArrayList<String[]> results = new ArrayList<String[]>();
+			String[] labelRow = new String[2];
+			labelRow[0] = "verb";
+			labelRow[1] = "count";
+			results.add(labelRow);
+			for (String key : verbs.keySet()) {
+				Integer count = verbs.get(key);
+				System.out.println("VERB:"+key+" count:"+count.intValue());
+				
+				String[] row = new String[2];
+				row[0] = key;
+				row[1] = count.toString();
+				results.add(row);
+			}
+			
+			fh.writeResultsToCSV(outFilename+"-verbs", results);
+		}
 	}
 }

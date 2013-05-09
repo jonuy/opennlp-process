@@ -5,9 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.util.ArrayList;
 
-import opennlp.tools.cmdline.PerformanceMonitor;
 import opennlp.tools.cmdline.postag.POSModelLoader;
 import opennlp.tools.namefind.NameFinderME;
 import opennlp.tools.namefind.TokenNameFinderModel;
@@ -78,31 +76,29 @@ public class OpenNlpWrapper {
 		}
 	}
 	
-	public String[] tagPOS(String input, String modelFile) throws FileNotFoundException, IOException {
+	public POSSample tagPOS(String input, String modelFile) throws FileNotFoundException, IOException {
 		POSModel model = new POSModelLoader().load(new File(modelFile));
-		PerformanceMonitor perfMon = new PerformanceMonitor(System.err, "sent");
+//		PerformanceMonitor perfMon = new PerformanceMonitor(System.err, "sent");
 		POSTaggerME tagger = new POSTaggerME(model);
 		
 		ObjectStream<String> lineStream = new PlainTextByLineStream(
 			new StringReader(input));
 		
-		perfMon.start();
-		ArrayList<String> samples = new ArrayList<String>();
-		String line;
-		while ((line = lineStream.read()) != null) {
+//		perfMon.start();
+		String line = lineStream.read();
+		if (line != null) {
 			String whitespaceTokenizerLine[] = WhitespaceTokenizer.INSTANCE.tokenize(line);
 			String[] tags = tagger.tag(whitespaceTokenizerLine);
 			
 			POSSample sample = new POSSample(whitespaceTokenizerLine, tags);
-			samples.add(sample.toString());
 			System.out.println("sample: "+sample.toString());
+//			perfMon.incrementCounter();
+//			perfMon.stopAndPrintFinalResult();
 			
-			perfMon.incrementCounter();
+			return sample;
 		}
-		perfMon.stopAndPrintFinalResult();
 		
-		String[] inputTagged = new String[samples.size()];
-		return samples.toArray(inputTagged);
+		return null;
 	}
 	
 	public void runDemoTest() {
@@ -123,9 +119,9 @@ public class OpenNlpWrapper {
 				System.out.println("names["+i+"] = "+names[i]);
 			}
 			
-			String[] samples = tagPOS(paragraph, "models/en-pos-maxent.bin");
-			for (int i=0; i<samples.length; i++) {
-				System.out.println("samples["+i+"] = "+samples[i]);
+			POSSample sample = tagPOS(paragraph, "models/en-pos-maxent.bin");
+			for (int i=0; i<sample.getTags().length; i++) {
+				System.out.println("sample = "+sample.getSentence()[i]+" / tag = "+sample.getTags()[i]);
 			}
 		}
 		catch (Exception e) {

@@ -43,12 +43,20 @@ public class FileHandler {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param filename CSV file to write to. Function takes care of adding the file extension.
+	 * @param allLines List of strings to write to the CSV file
+	 */
 	public void writeResultsToCSV(String filename, List<String[]> allLines) {
 		try {
+			filename += ".csv";
 			FileWriter fw = new FileWriter(filename);
 			CSVWriter writer = new CSVWriter(fw, ',');
 			writer.writeAll(allLines);
 			writer.close();
+			
+			System.out.println("Wrote to file: "+filename);
 		}
 		catch (Exception e) {
 			System.out.println("Error writing to file: "+filename+". "+e.getMessage());
