@@ -104,4 +104,32 @@ public class OpenNlpWrapper {
 		String[] inputTagged = new String[samples.size()];
 		return samples.toArray(inputTagged);
 	}
+	
+	public void runDemoTest() {
+		try {
+			String paragraph = "I call this the magnificent tree. It will be a while still before it turns green again. It has lost the barn that stood here for two centuries. The building collapsed a few Winter's ago.";
+			String[] sentences = detectSentence(paragraph, "models/en-sent.bin");
+			for (int i=0; i<sentences.length; i++) {
+				System.out.println("Sentence["+i+"] = "+sentences[i]);
+			}
+			
+			String[] tokens = tokenize(paragraph, "models/en-token.bin");
+			for (int i=0; i<tokens.length; i++) {
+				System.out.println("tokens["+i+"] = "+tokens[i]);
+			}
+			
+			String[] names = findNames(paragraph, "models/en-ner-person.bin");
+			for (int i=0; i<names.length; i++) {
+				System.out.println("names["+i+"] = "+names[i]);
+			}
+			
+			String[] samples = tagPOS(paragraph, "models/en-pos-maxent.bin");
+			for (int i=0; i<samples.length; i++) {
+				System.out.println("samples["+i+"] = "+samples[i]);
+			}
+		}
+		catch (Exception e) {
+			
+		}
+	}
 }

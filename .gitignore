@@ -1,3 +1,5 @@
 *.swp
 .settings
 notes.txt
+bin
+data
